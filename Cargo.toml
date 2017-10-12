@@ -1,0 +1,6 @@
+[package]
+name = "nostd_tool"
+version = "0.1.0"
+authors = ["KONDOU Nobuhiro <kondou.nobuhiro@gmail.com>"]
+
+[dependencies]
