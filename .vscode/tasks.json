@@ -24,6 +24,17 @@
             "problemMatcher": [
                 "$rustc"
             ]
+        },
+        {
+            "type": "shell",
+            "taskName": "cargo doc",
+            "command": "cargo",
+            "args": [
+                "doc"
+            ],
+            "problemMatcher": [
+                "$rustc"
+            ]
         }
     ]
 }

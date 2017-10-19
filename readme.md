@@ -15,11 +15,6 @@ STM32 + CubeMX 環境で rust を使った組み込みプログラミング環�
         - std環境のときに有効になる。
         - std 環境のときは`core`の代わりに`std`を使う。
         - tests モジュールを定義し、その中で結合テストを実施する。
-* `.cargo/config`。
-* クロス環境なので`rustup override set nightly`してNightlyコンパイラを有効にしておく。
-* ビルドのときは、利用先のクレート(通常binだろう)で`xargo build --target=thumbv7m-none-eabi`。最新の`libcore`をダウンロードして、ビルドしてくれる。
-* テストのときは`cargo test`。
-
 ```rust 
 #[cfg(test)]
 #[cfg(feature = "std")]
@@ -30,6 +25,30 @@ mod tests {
     }
 }
 ```
+
+* `src/queue.rs`。
+    + だいたいイデオムどおり。
+    + `#[cfg(test)]`はテストのときに有効になる。
+    + `mod tests`でテスト用のモジュール名前空間を定義する。
+    + `use super::*;`で上位(モジュール自身)の識別子をインポートする。
+    + `#[test]`でテスト時に実行する関数を指定する。
+```rust
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_1() {
+        assert_eq!(1,1);
+    }
+}
+```
+
+* `.cargo/config`。
+* クロス環境なので`rustup override set nightly`してNightlyコンパイラを有効にしておく。
+* ビルドのときは、利用先のクレート(通常binだろう)で`xargo build --target=thumbv7m-none-eabi`。最新の`libcore`をダウンロードして、ビルドしてくれる。
+* テストのときは`cargo test`。
+
 
 
 
@@ -49,3 +68,13 @@ mod tests {
     + 例を示すときは`# Examples`セクションを使う。
     + `use クレート名::モジュール名`で自分自身のモジュールの使用を宣言する。ちょうど、そのlib crate を外部から使うときの書式と同じ。
     + あとは普通に。
+
+
+## テストの実行
+
+`cargo test`でセルフ環境でテストコードが(stdとともに)コンパイルされてテストが実行される。
+
+
+## ドキュメントの生成
+
+`cargo doc`で`target/doc/`の下にドキュメントが生成される。

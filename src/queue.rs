@@ -7,6 +7,7 @@ pub enum ErrorKind {
     NoSpace,
 }
 
+/// Queue for \<T\>
 #[derive(Debug)]
 pub struct Queue<'a, T: 'a + Copy> {
     memory: &'a mut[T],
@@ -18,6 +19,9 @@ pub use core::slice::Iter;
 pub use core::slice::IterMut;
 
 impl<'a, T> Queue<'a, T> where T: 'a + Copy {
+    /// 外部で確保された T のスライスを引数にとり、その上にキューを実装する。
+    /// 外部のスライスを参照しているので、`Queue`もそれのライフタイムを引き継ぐ。
+    /// この元メモリ領域は、配列(コンパイル時に長さが決定されるメモリ領域)だと、型シグネチャに長さが含まれてしまう。スライス(長さはコンパイル時には固定されない。別途長さを管理する領域が付随する)ので、この場合は汎用的に使うことができる。`Vec`は`no_std`環境では使いづらい。
     pub fn new(memory: &'a mut [T]) -> Self {
         Queue {
             memory:memory,
@@ -149,8 +153,37 @@ impl<'a, T> Queue<'a, T> where T: 'a + Copy {
         self.lock.unlock();
     }
 
-    fn clear(&mut self) {
-        self.len = 0
+    /// 先頭に要素を追加する。
+    pub fn shift(&mut self, value: T) {
+        if self.available() >= 1 {
+            self.lock.get_lock();
+            for i in 0..self.len {
+                self.memory[self.len-i] = self.memory[self.len-i-1];
+            }
+            self.memory[0] = value;
+            self.len += 1;
+            self.lock.unlock();
+        }
+    }
+
+    /// 先頭の要素を取り除いて返す。
+    pub fn unshift(&mut self) -> Option<T> {
+        if self.len > 0 {
+            self.lock.get_lock();
+            let ret = self.memory[0];
+            for i in 1..self.len {
+                self.memory[i-1] = self.memory[i];
+            }
+            self.len -= 1;
+            self.lock.unlock();
+            Some(ret)
+        } else {
+            None
+        }
+    }
+
+    pub fn clear(&mut self) {
+        self.len = 0;
     }
 
     /// すべての要素に f を適用する
@@ -170,21 +203,59 @@ impl<'a, T> Queue<'a, T> where T: 'a + Copy {
 
     #[inline]
     pub fn iter_mut(&mut self) -> IterMut<T> {
-        let (mut slice, _) = self.memory.split_at_mut(self.len);
+        let (slice, _) = self.memory.split_at_mut(self.len);
         slice.iter_mut()
-    }
-
-    /// 先頭の要素を取り除いて返す。
-    fn shift(&mut self) -> T {
-        assert!(self.len > 0);
-        self.lock.get_lock();
-        let ret = self.memory[0];
-        for i in 1..self.len {
-            self.memory[i-1] = self.memory[i];
-        }
-        self.len += 1;
-        self.lock.unlock();
-        ret
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_new() {
+        let mut mem: [u32;16] = [0;16];
+        let q = Queue::<u32>::new(&mut mem);
+        assert_eq!(q.capacity(),16);
+        assert_eq!(q.len(),0);
+        assert_eq!(q.available(),16);
+        assert_eq!(q.is_empty(),true);
+    }
+
+    #[test]
+    fn test_push_pop() {
+        let mut mem: [u32;16] = [0;16];
+        let mut q = Queue::<u32>::new(&mut mem);
+        q.push(5);
+        assert_eq!(q.peek(0), 5);
+        assert_eq!(q.pop().unwrap(), 5);
+        match q.pop() {
+            Some(_) => assert!(false, "wrong"),
+            None => ()
+        }
+    }
+
+    #[test]
+    fn test_shift_unshift() {
+        let mut mem: [u32;16] = [0;16];
+        let mut q = Queue::<u32>::new(&mut mem);
+        q.push(1);
+        assert_eq!(q.peek(0), 1);
+        q.push(2);
+        assert_eq!(q.peek(0), 1);
+        assert_eq!(q.peek(1), 2);
+        assert_eq!(q.len(), 2);
+        q.shift(0);
+        assert_eq!(q.peek(0), 0);
+        assert_eq!(q.peek(1), 1);
+        assert_eq!(q.peek(2), 2);
+        assert_eq!(q.len(), 3);
+        assert_eq!(q.unshift().unwrap(), 0);
+        assert_eq!(q.unshift().unwrap(), 1);
+        q.clear();
+        match q.unshift() {
+            Some(_) => assert!(false, "wrong"),
+            None => ()
+        }
+    }
+}
