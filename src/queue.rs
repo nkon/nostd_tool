@@ -154,7 +154,7 @@ impl<'a, T> Queue<'a, T> where T: 'a + Copy {
     }
 
     /// 先頭に要素を追加する。
-    pub fn shift(&mut self, value: T) {
+    pub fn unshift(&mut self, value: T) {
         if self.available() >= 1 {
             self.lock.get_lock();
             for i in 0..self.len {
@@ -167,7 +167,7 @@ impl<'a, T> Queue<'a, T> where T: 'a + Copy {
     }
 
     /// 先頭の要素を取り除いて返す。
-    pub fn unshift(&mut self) -> Option<T> {
+    pub fn shift(&mut self) -> Option<T> {
         if self.len > 0 {
             self.lock.get_lock();
             let ret = self.memory[0];
@@ -245,15 +245,15 @@ mod tests {
         assert_eq!(q.peek(0), 1);
         assert_eq!(q.peek(1), 2);
         assert_eq!(q.len(), 2);
-        q.shift(0);
+        q.unshift(0);
         assert_eq!(q.peek(0), 0);
         assert_eq!(q.peek(1), 1);
         assert_eq!(q.peek(2), 2);
         assert_eq!(q.len(), 3);
-        assert_eq!(q.unshift().unwrap(), 0);
-        assert_eq!(q.unshift().unwrap(), 1);
+        assert_eq!(q.shift().unwrap(), 0);
+        assert_eq!(q.shift().unwrap(), 1);
         q.clear();
-        match q.unshift() {
+        match q.shift() {
             Some(_) => assert!(false, "wrong"),
             None => ()
         }
