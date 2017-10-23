@@ -9,7 +9,7 @@ STM32 + CubeMX 環境で rust を使った組み込みプログラミング環�
 ## `#![no_std]`環境で使うライブラリのテスト
 
 * `src/lib.rs`。
-    + 通常であれば`#![no_std]`と書くべき位置に`#![cfg_attr(not(feature = "std"), no_std)]`と書く。意味は「`std`環境でない場合は`no_std`とする」。
+    + 通常どおり`#![no_std]`で書き始める。
     + ライブラリの結合テストを書く場所に次のように書く。
         - cfg=testのときに有効になる。
         - std環境のときに有効になる。
@@ -38,8 +38,9 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_1() {
-        assert_eq!(1,1);
+    fn it_works() {
+        let lock = lock::Lock::Unlocked;
+        assert_eq!(lock, lock::Lock::Unlocked);
     }
 }
 ```
@@ -48,8 +49,6 @@ mod tests {
 * クロス環境なので`rustup override set nightly`してNightlyコンパイラを有効にしておく。
 * ビルドのときは、利用先のクレート(通常binだろう)で`xargo build --target=thumbv7m-none-eabi`。最新の`libcore`をダウンロードして、ビルドしてくれる。
 * テストのときは`cargo test`。
-
-
 
 
 ## doctest
@@ -78,3 +77,24 @@ mod tests {
 ## ドキュメントの生成
 
 `cargo doc`で`target/doc/`の下にドキュメントが生成される。
+
+## 使う時
+
+* Cargo.toml に依存関係と入手元を書く。
+```
+[dependencies]
+nostd_tool = {path = "../nostd_tool"}
+```
+* 使う側の最上位のクレート(`src/main.rs`または`src/lib.rs`)で、外部クレートを取り込む。この時点で `nostd_tool::lock`などの名前で、クレートが提供するモジュールが使えるようになっている。
+```rust
+extern crate nostd_tool;
+```
+* 通常は使いやすくするために、短縮名を付ける。こうすると`lock`やその下の`lock::Lock`などが使えるようになる。
+```rust
+use nostd_tool::lock;
+```
+* トップレベルクレートではなくサブレベルクレートで取り込むときは、次のように、トップレベルから見たモジュールパスを記述する。
+```rust
+extern crate nostd_tool;
+use self::nostd_tool::lock;
+```

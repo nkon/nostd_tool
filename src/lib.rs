@@ -1,7 +1,5 @@
 //! utility used in no_std enviroment.
 
-// #![cfg_attr(not(feature = "std"), no_std)]
-
 #![no_std]
 pub mod lock;
 pub mod queue;
@@ -11,7 +9,11 @@ pub mod queue;
 #[cfg(feature = "std")]
 use std as core;
 mod tests {
+    use super::*;
+
     #[test]
     fn it_works() {
+        let lock = lock::Lock::Unlocked;
+        assert_eq!(lock, lock::Lock::Unlocked);
     }
 }
