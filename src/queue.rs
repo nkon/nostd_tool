@@ -1,5 +1,4 @@
 
-use core;
 use lock::Lock;
 
 #[derive(Debug)]

@@ -8,7 +8,7 @@ STM32 + CubeMX 環境で rust を使った組み込みプログラミング環�
 
 ## `#![no_std]`環境で使うライブラリのテスト
 
-* `src/lib.rs`。　　
+* `src/lib.rs`。
     + 通常であれば`#![no_std]`と書くべき位置に`#![cfg_attr(not(feature = "std"), no_std)]`と書く。意味は「`std`環境でない場合は`no_std`とする」。
     + ライブラリの結合テストを書く場所に次のように書く。
         - cfg=testのときに有効になる。
