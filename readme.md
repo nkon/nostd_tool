@@ -93,8 +93,23 @@ extern crate nostd_tool;
 ```rust
 use nostd_tool::lock;
 ```
+これは次の構文糖衣と解釈するとわかりやすい。
+```rust
+use nostd_tool::lock as lock;
+```
+
 * トップレベルクレートではなくサブレベルクレートで取り込むときは、次のように、トップレベルから見たモジュールパスを記述する。
 ```rust
 extern crate nostd_tool;
 use self::nostd_tool::lock;
 ```
+
+
+
+
+
+## 継承
+
+rust では「クラス」を作るためには struct などに impl で実装を追加する。通常のオブジェクト指向言語では実装の再利用で特殊化が使えるときには「継承」を使うことが多いが、rustでは継承は無いので「has-a」関係を用いて実装する。
+
+
