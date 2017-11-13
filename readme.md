@@ -105,8 +105,33 @@ use self::nostd_tool::lock;
 ```
 
 
+## 条件コンパイルのフラグ設定
 
+外部ライブラリを使うとき、外部ライブラリ側で、`std`環境と`no_std`環境で条件コンパイルされるようになっていることがある。
+例えば`lazy_static`では、次のようになっている。
 
+```
+#[cfg(not(feature="nightly"))]
+#[doc(hidden)]
+pub mod lazy;
+
+#[cfg(all(feature="nightly", not(feature="spin_no_std")))]
+#[path="nightly_lazy.rs"]
+#[doc(hidden)]
+pub mod lazy;
+
+#[cfg(all(feature="nightly", feature="spin_no_std"))]
+#[path="core_lazy.rs"]
+#[doc(hidden)]
+pub mod lazy;
+```
+
+この場合、`core_lazy.rs`を読み込ませる場合は、`feature="spin_no_std"`が有効にならなければならない。ドキュメントが見つけられずに悩んだが、`Cargo.toml`の`[dependencies]`セクションでライブラリを読み込むときに、次のように設定すれば良い。
+```
+[dependencies]
+lazy_static = {version = "*", features = ["spin_no_std"] }
+```
+公式ドキュメントには、`[features]`セクションに書けと記されていたが、どうもうまく行かなかった。
 
 ## 継承
 
